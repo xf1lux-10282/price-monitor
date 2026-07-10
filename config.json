@@ -1,0 +1,67 @@
+{
+  "settings": {
+    "comment": "通知の設定。Webhook URL や ntfy トピックは GitHub Secrets から環境変数で渡すのが安全です（NTFY_TOPIC / NTFY_SERVER / DISCORD_WEBHOOK_URL）。ここに直接書くこともできます。",
+    "ntfy": {
+      "enabled": true,
+      "server": "https://ntfy.sh",
+      "topic": ""
+    },
+    "discord": {
+      "enabled": true,
+      "webhook_url": ""
+    },
+    "notify_on": "change",
+    "request_timeout_sec": 20,
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+  },
+  "products": [
+    {
+      "id": "bs-na2-platinum-20",
+      "name": "Bostick & Sullivan: Sodium Platinum (Na2) 20% Solution 10ml",
+      "url": "https://www.bostick-sullivan.com/product/sodium-platinum-na2-standard-20-solution-10-ml/",
+      "currency": "USD",
+      "enabled": true,
+      "extract": {
+        "variant": "10ml",
+        "main_price": true,
+        "css_selector": null,
+        "regex": null,
+        "use_json_ld": true,
+        "use_meta": true
+      },
+      "target_price": null
+    },
+    {
+      "id": "bs-platinum-3-25",
+      "name": "Bostick & Sullivan: Platinum Solution #3 25ml",
+      "url": "https://www.bostick-sullivan.com/product/platinum-solution-3-25-ml/",
+      "currency": "USD",
+      "enabled": true,
+      "extract": {
+        "variant": "25ml",
+        "main_price": true,
+        "css_selector": null,
+        "regex": null,
+        "use_json_ld": true,
+        "use_meta": true
+      },
+      "target_price": null
+    },
+    {
+      "id": "bs-palladium-3-25",
+      "name": "Bostick & Sullivan: Palladium Solution #3 25ml",
+      "url": "https://www.bostick-sullivan.com/product/palladium-solution-3-standard-25ml/",
+      "currency": "USD",
+      "enabled": true,
+      "extract": {
+        "variant": "25ml",
+        "main_price": true,
+        "css_selector": null,
+        "regex": null,
+        "use_json_ld": true,
+        "use_meta": true
+      },
+      "target_price": null
+    }
+  ]
+}

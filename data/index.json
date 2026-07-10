@@ -1,0 +1,48 @@
+{
+  "generated": "2026-07-10T03:45:36Z",
+  "products": [
+    {
+      "id": "bs-na2-platinum-20",
+      "name": "Bostick & Sullivan: Sodium Platinum (Na2) 20% Solution 10ml",
+      "url": "https://www.bostick-sullivan.com/product/sodium-platinum-na2-standard-20-solution-10-ml/",
+      "currency": "USD",
+      "enabled": true,
+      "target_price": null,
+      "latest_price": 170.3,
+      "latest_time": "2026-07-10T03:45:32Z",
+      "latest_price_jpy": 27491,
+      "latest_fx": 161.426,
+      "first_price": 170.3,
+      "points": 2656
+    },
+    {
+      "id": "bs-platinum-3-25",
+      "name": "Bostick & Sullivan: Platinum Solution #3 25ml",
+      "url": "https://www.bostick-sullivan.com/product/platinum-solution-3-25-ml/",
+      "currency": "USD",
+      "enabled": true,
+      "target_price": null,
+      "latest_price": 375.0,
+      "latest_time": "2026-07-10T03:45:34Z",
+      "latest_price_jpy": 60535,
+      "latest_fx": 161.426,
+      "first_price": 375.0,
+      "points": 2656
+    },
+    {
+      "id": "bs-palladium-3-25",
+      "name": "Bostick & Sullivan: Palladium Solution #3 25ml",
+      "url": "https://www.bostick-sullivan.com/product/palladium-solution-3-standard-25ml/",
+      "currency": "USD",
+      "enabled": true,
+      "target_price": null,
+      "latest_price": 200.77,
+      "latest_time": "2026-07-10T03:45:36Z",
+      "latest_price_jpy": 32409,
+      "latest_fx": 161.426,
+      "first_price": 200.77,
+      "points": 2656
+    }
+  ],
+  "fx_usdjpy": 161.426
+}

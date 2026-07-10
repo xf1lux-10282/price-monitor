@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<title>価格モニター</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<style>
+  :root { --bg:#0f172a; --card:#1e293b; --fg:#e2e8f0; --muted:#94a3b8;
+          --up:#ef4444; --down:#22c55e; --accent:#38bdf8; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+         background:var(--bg); color:var(--fg); padding:env(safe-area-inset-top) 0 2rem; }
+  header { padding:1rem 1.2rem .5rem; display:flex; align-items:baseline; gap:.6rem; flex-wrap:wrap; }
+  header h1 { font-size:1.25rem; margin:0; }
+  header .meta { color:var(--muted); font-size:.8rem; }
+  .wrap { padding:0 1rem; max-width:880px; margin:0 auto; }
+  .card { background:var(--card); border-radius:16px; padding:1rem 1.1rem; margin:.8rem 0;
+          box-shadow:0 1px 3px rgba(0,0,0,.4); }
+  .row { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; }
+  .name { font-weight:600; font-size:1rem; line-height:1.3; }
+  .name a { color:var(--fg); text-decoration:none; }
+  .name a:hover { color:var(--accent); }
+  .price { text-align:right; white-space:nowrap; }
+  .price .now { font-size:1.5rem; font-weight:700; }
+  .price .cur { font-size:.8rem; color:var(--muted); margin-left:.2rem; }
+  .chg { font-size:.85rem; font-weight:600; margin-top:.15rem; }
+  .chg.up { color:var(--up); } .chg.down { color:var(--down); } .chg.flat { color:var(--muted); }
+  .jpy { display:block; font-size:.82rem; color:#fbbf24; margin-top:.1rem; }
+  .stats { display:flex; gap:1.2rem; margin:.6rem 0 .2rem; color:var(--muted); font-size:.78rem; flex-wrap:wrap; }
+  .stats b { color:var(--fg); font-weight:600; }
+  .chart-box { position:relative; height:200px; margin-top:.4rem;
+               overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }
+  .chart-inner { position:relative; height:100%; min-width:100%; }
+  .chart-box::-webkit-scrollbar { height:7px; }
+  .chart-box::-webkit-scrollbar-thumb { background:#475569; border-radius:4px; }
+  .chart-box::-webkit-scrollbar-track { background:transparent; }
+  .toolbar { display:flex; gap:.4rem; align-items:center; flex-wrap:wrap; padding:.2rem 1.2rem .6rem; }
+  .toolbar .label { color:var(--muted); font-size:.78rem; margin-right:.2rem; }
+  .range-btn { background:#334155; color:var(--fg); border:none; border-radius:999px;
+               padding:.3rem .8rem; font-size:.8rem; cursor:pointer; }
+  .range-btn.active { background:var(--accent); color:#0f172a; font-weight:700; }
+  .range-btn:hover { filter:brightness(1.1); }
+  .hint { color:var(--muted); font-size:.7rem; margin-left:auto; }
+  .badge { display:inline-block; font-size:.7rem; padding:.1rem .5rem; border-radius:999px;
+           background:#334155; color:var(--muted); margin-left:.4rem; }
+  .badge.paused { background:#451a1a; color:#fca5a5; }
+  .empty { color:var(--muted); text-align:center; padding:3rem 1rem; }
+  .section-title { margin:1.8rem .2rem .2rem; font-size:.95rem; font-weight:700; color:var(--fg);
+                   border-top:1px solid #33415577; padding-top:1.2rem; }
+  .section-note { font-size:.72rem; color:var(--muted); font-weight:400; margin-left:.4rem; }
+  .unit { font-size:.78rem; color:var(--muted); font-weight:400; margin-left:.2rem; }
+  footer { text-align:center; color:var(--muted); font-size:.72rem; margin-top:1.5rem; }
+  .target { color:var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <h1>📈 価格モニター</h1>
+  <span class="meta" id="updated"></span>
+</header>
+<div class="toolbar" id="toolbar" style="display:none">
+  <span class="label">表示期間</span>
+  <button class="range-btn active" data-range="all">全体</button>
+  <button class="range-btn" data-range="1Y">1年</button>
+  <button class="range-btn" data-range="3M">3ヶ月</button>
+  <button class="range-btn" data-range="1M">1ヶ月</button>
+  <button class="range-btn" data-range="1W">1週間</button>
+  <button class="range-btn" data-range="3D">3日</button>
+  <span class="hint">期間を選ぶ → グラフを指/マウスで左右にスクロール</span>
+</div>
+<div class="wrap" id="app">
+  <div class="empty">読み込み中…</div>
+</div>
+<footer>GitHub Actions により自動更新 · データは <code>data/</code> に保存</footer>
+
+<script>
+const fmt = (n, cur) => n == null ? "—" : Number(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + " " + (cur||"");
+const charts = [];
+
+async function getJSON(path){
+  const r = await fetch(path + "?t=" + Date.now());
+  if(!r.ok) throw new Error(path + " " + r.status);
+  return r.json();
+}
+
+function changeInfo(first, now){
+  if(first == null || now == null) return {cls:"flat", txt:"履歴待ち"};
+  const d = now - first, pct = first ? d/first*100 : 0;
+  if(d === 0) return {cls:"flat", txt:"変化なし"};
+  const arrow = d < 0 ? "▼" : "▲";
+  const cls = d < 0 ? "down" : "up";
+  return {cls, txt:`${arrow} ${d>0?"+":""}${d.toFixed(2)} (${pct>0?"+":""}${pct.toFixed(1)}%)`};
+}
+
+function renderCard(p){
+  const ci = changeInfo(p.first_price, p.latest_price);
+  const paused = p.enabled === false;
+  const target = p.target_price != null ? `<span class="target">🎯 目標 ${fmt(p.target_price, p.currency)}</span>` : "";
+  const jpy = p.latest_price_jpy != null
+    ? `<span class="jpy">≒ ¥${Number(p.latest_price_jpy).toLocaleString()}</span>` : "";
+  const rate = p.latest_fx != null
+    ? `<span>為替 <b>1$=${Number(p.latest_fx).toFixed(2)}円</b></span>` : "";
+  return `
+  <div class="card">
+    <div class="row">
+      <div class="name">
+        <a href="${p.url}" target="_blank" rel="noopener">${p.name || p.id}</a>
+        ${paused ? '<span class="badge paused">停止中</span>' : ''}
+      </div>
+      <div class="price">
+        <div><span class="now">${p.latest_price==null?"—":Number(p.latest_price).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</span><span class="cur">${p.currency||""}</span></div>
+        <div class="chg ${ci.cls}">${ci.txt}</div>
+        ${jpy}
+      </div>
+    </div>
+    <div class="stats">
+      <span>記録 <b>${p.points}</b> 回</span>
+      <span>初回 <b>${fmt(p.first_price, p.currency)}</b></span>
+      ${rate}
+      ${target}
+    </div>
+    <div class="chart-box"><div class="chart-inner"><canvas id="c-${p.id}"></canvas></div></div>
+  </div>`;
+}
+
+const DAY = 86400000;
+// 表示期間（1画面に収める時間幅）。null=全期間を画面幅にフィット。
+// 総期間がこれより長いとき、はみ出す分だけキャンバスを広げて左右スクロールできる。
+const RANGES = { "all": null, "1Y": 365*DAY, "3M": 90*DAY, "1M": 30*DAY, "1W": 7*DAY, "3D": 3*DAY };
+let currentRange = "all";
+
+// 期間に応じた x 軸の表示単位（ラベルの粒度）を決める。
+// 全グラフで同じ単位を使い、表記（日付＋時刻 / 日付 …）をそろえる。
+function unitFor(spanMs){
+  if(spanMs == null || spanMs > 200*DAY) return "month";
+  if(spanMs > 60*DAY) return "week";
+  if(spanMs > 5*DAY) return "day";
+  return "hour";   // 数日以内は「M/d HH:mm」と時刻まで表示（銀と同じ表記）
+}
+
+// 1つのチャートに表示期間を適用する（横スクロール方式）。
+// 全データを横長キャンバスに描画し、選んだ期間が1画面に収まるようキャンバス幅を決める。
+// 画面（.chart-box）からはみ出した分を、指/マウスで左右にスクロールして前後の期間を見る。
+function applyRangeToChart(entry, unit){
+  const { chart, inner, dataMin, dataMax } = entry;
+  const box = inner.parentElement;            // .chart-box（表示窓）
+  const boxW = box.clientWidth || 1;
+  const total = Math.max(1, dataMax - dataMin);
+  const win = RANGES[currentRange];           // 1画面に収める期間(ms) / null=全期間
+  // 総期間が窓より長いときだけ、その比率でキャンバスを広げる（最低でも画面幅）
+  let widthPx = boxW;
+  if(win && total > win){ widthPx = Math.round(boxW * total / win); }
+  inner.style.width = widthPx + "px";
+  chart.options.scales.x.min = dataMin;
+  chart.options.scales.x.max = dataMax;
+  chart.options.scales.x.ticks.maxTicksLimit = Math.max(6, Math.round(6 * widthPx / boxW));
+  chart.options.scales.x.time.unit = unit;    // 全グラフ共通の表記にそろえる
+  chart.resize();                              // inner幅に追従させる
+  chart.update("none");
+  box.scrollLeft = box.scrollWidth;            // 最新（右端）を表示
+}
+
+function applyRange(range){
+  currentRange = range;
+  document.querySelectorAll(".range-btn").forEach(b =>
+    b.classList.toggle("active", b.dataset.range === range));
+  // 横軸の表記を全グラフでそろえるため、表示単位は共通の基準スパンから1つだけ決める
+  const win = RANGES[range];
+  let spanForUnit = win || 1;
+  if(!win) charts.forEach(e => { spanForUnit = Math.max(spanForUnit, e.dataMax - e.dataMin); });
+  const unit = unitFor(spanForUnit);
+  charts.forEach(e => applyRangeToChart(e, unit));
+}
+
+// 画面回転・リサイズ時に幅を再計算
+let _resizeTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(() => applyRange(currentRange), 200);
+});
+
+async function drawChart(p){
+  let hist;
+  try { hist = await getJSON(`data/history/${p.id}.json`); } catch(e){ return; }
+  const points = hist.points || [];
+  const pts = points.map(x => ({x: new Date(x.t).getTime(), y:x.price}));
+  if(!pts.length) return;
+  const jpyPts = points.filter(x => x.price_jpy != null)
+                       .map(x => ({x: new Date(x.t).getTime(), y:x.price_jpy}));
+  const down = p.latest_price <= p.first_price;
+  const color = down ? "#22c55e" : "#ef4444";
+  const ctx = document.getElementById("c-"+p.id);
+
+  const datasets = [{
+    label: p.currency || "価格", yAxisID: "y",
+    data: pts, borderColor: color, backgroundColor: color+"22",
+    fill:true, stepped:"after", tension:0, pointRadius:2, pointHoverRadius:4, borderWidth:2
+  }];
+  // 円換算ライン（為替×価格）。凡例クリックで表示/非表示を切替できる
+  if(jpyPts.length){
+    datasets.push({
+      label:"円換算", yAxisID:"yJpy",
+      data:jpyPts, borderColor:"#f59e0b", backgroundColor:"transparent",
+      fill:false, stepped:"after", tension:0, pointRadius:0, borderWidth:1.5, borderDash:[4,3]
+    });
+  }
+
+  const dataMin = pts[0].x, dataMax = pts[pts.length-1].x;
+  const chart = new Chart(ctx, {
+    type:"line",
+    data:{ datasets },
+    options:{
+      responsive:true, maintainAspectRatio:false, animation:false,
+      interaction:{ mode:"index", intersect:false },
+      plugins:{
+        legend:{ display: jpyPts.length>0, labels:{color:"#94a3b8",boxWidth:12,font:{size:10}} },
+        tooltip:{ callbacks:{
+          title:(it)=> new Date(it[0].parsed.x).toLocaleString("ja-JP",
+                  {year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}),
+          label:(it)=> it.dataset.label==="円換算"
+            ? "円換算: ¥" + Number(it.parsed.y).toLocaleString()
+            : fmt(it.parsed.y, p.currency) } }
+      },
+      scales:{
+        x:{ type:"time",
+            time:{ unit:"day", displayFormats:{ hour:"M/d HH:mm", day:"M/d", week:"M/d", month:"yyyy/M" } },
+            ticks:{ color:"#94a3b8", maxRotation:0, autoSkip:true, maxTicksLimit:6 },
+            grid:{ color:"#33415533" } },
+        y:{ position:"left", ticks:{color:"#94a3b8"}, grid:{color:"#33415555"} },
+        yJpy:{ position:"right", display: jpyPts.length>0,
+            ticks:{color:"#f59e0b",callback:(v)=>"¥"+Number(v).toLocaleString()}, grid:{display:false} }
+      }
+    }
+  });
+  charts.push({ chart, inner: ctx.parentElement, dataMin, dataMax, n: pts.length });
+}
+
+// ── 参考指標（地金・為替）。商品とは別系列。横スクロールは商品グラフと共通 ──
+function makeTimeChart(ctx, datasets, dataMin, dataMax, opt){
+  const chart = new Chart(ctx, {
+    type:"line", data:{ datasets },
+    options:{
+      responsive:true, maintainAspectRatio:false, animation:false,
+      interaction:{ mode:"index", intersect:false },
+      plugins:{
+        legend:{ display: !!opt.legend, labels:{color:"#94a3b8",boxWidth:12,font:{size:10}} },
+        tooltip:{ callbacks:{
+          title:(it)=> new Date(it[0].parsed.x).toLocaleString("ja-JP",
+                  {year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}),
+          label:(it)=> opt.tip(it) } }
+      },
+      scales:{
+        x:{ type:"time",
+            time:{ unit:"day", displayFormats:{ hour:"M/d HH:mm", day:"M/d", week:"M/d", month:"yyyy/M" } },
+            ticks:{ color:"#94a3b8", maxRotation:0, autoSkip:true, maxTicksLimit:6 }, grid:{ color:"#33415533" } },
+        y:{ position:"left", ticks:{color:"#94a3b8",callback:opt.leftTick}, grid:{color:"#33415555"} },
+        yR:{ position:"right", display:!!opt.rightOn,
+             ticks:{color:"#f59e0b",callback:opt.rightTick}, grid:{display:false} }
+      }
+    }
+  });
+  charts.push({ chart, inner: ctx.parentElement, dataMin, dataMax, n: (datasets[0].data||[]).length });
+}
+
+function drawMetalChart(canvasId, points){
+  // 円/g のみ表示（日本の地金表示単位）
+  const jpy = points.filter(x => x.jpy_g != null).map(x => ({x:new Date(x.t).getTime(), y:x.jpy_g}));
+  if(!jpy.length) return;
+  const color = "#a78bfa";
+  makeTimeChart(document.getElementById(canvasId),
+    [{ label:"円/g", yAxisID:"y", data:jpy, borderColor:color, backgroundColor:color+"22",
+       fill:true, tension:0, pointRadius:0, pointHoverRadius:3, borderWidth:2 }],
+    jpy[0].x, jpy[jpy.length-1].x, {
+      legend:false, rightOn:false,
+      leftTick:(v)=>"¥"+Number(v).toLocaleString(),
+      tip:(it)=>"円/g: ¥"+Number(it.parsed.y).toLocaleString() });
+}
+
+function drawFxChart(canvasId, points){
+  const d = points.map(x => ({x:new Date(x.t).getTime(), y:x.usdjpy}));
+  if(!d.length) return;
+  const color = "#38bdf8";
+  makeTimeChart(document.getElementById(canvasId),
+    [{ label:"USD/JPY", yAxisID:"y", data:d, borderColor:color, backgroundColor:color+"22",
+       fill:true, tension:0, pointRadius:0, pointHoverRadius:3, borderWidth:2 }],
+    d[0].x, d[d.length-1].x, {
+      legend:false, rightOn:false,
+      leftTick:(v)=>"¥"+Number(v).toFixed(0),
+      tip:(it)=>"1$ = "+Number(it.parsed.y).toFixed(2)+"円" });
+}
+
+function refMetalCard(key, m){
+  const pts=m.points;
+  const withJpy = pts.filter(p => p.jpy_g != null);
+  const last = withJpy[withJpy.length-1];
+  const first = withJpy[0];
+  const ci = (first && last) ? changeInfo(first.jpy_g, last.jpy_g) : {cls:"flat", txt:"履歴待ち"};
+  const nowTxt = last ? "¥" + Number(last.jpy_g).toLocaleString() : "—";
+  const firstStat = first ? `<span>初回 <b>¥${Number(first.jpy_g).toLocaleString()}/g</b></span>` : "";
+  return `<div class="card">
+    <div class="row">
+      <div class="name">${m.label}<span class="unit">地金スポット</span></div>
+      <div class="price">
+        <div><span class="now">${nowTxt}</span><span class="cur">/g</span></div>
+        <div class="chg ${ci.cls}">${ci.txt}</div>
+      </div>
+    </div>
+    <div class="stats"><span>記録 <b>${pts.length}</b> 回</span>${firstStat}</div>
+    <div class="chart-box"><div class="chart-inner"><canvas id="rc-metal-${key}"></canvas></div></div>
+  </div>`;
+}
+
+function refFxCard(fx){
+  const pts=fx.points, last=pts[pts.length-1], first=pts[0];
+  const ci=changeInfo(first.usdjpy, last.usdjpy);
+  return `<div class="card">
+    <div class="row">
+      <div class="name">為替<span class="unit">USD/JPY</span></div>
+      <div class="price">
+        <div><span class="now">${Number(last.usdjpy).toFixed(2)}</span><span class="cur">円</span></div>
+        <div class="chg ${ci.cls}">${ci.txt}</div>
+      </div>
+    </div>
+    <div class="stats"><span>記録 <b>${pts.length}</b> 回</span><span>初回 <b>${Number(first.usdjpy).toFixed(2)}円</b></span></div>
+    <div class="chart-box"><div class="chart-inner"><canvas id="rc-fx"></canvas></div></div>
+  </div>`;
+}
+
+async function drawReference(){
+  let metals=null, fx=null;
+  try { metals = await getJSON("data/metals.json"); } catch(e){}
+  try { fx = await getJSON("data/fx_usdjpy.json"); } catch(e){}
+  const cards=[], draws=[];
+  for(const key of ["platinum","palladium","silver"]){
+    const m = metals && metals[key];
+    if(m && (m.points||[]).length){ cards.push(refMetalCard(key, m)); draws.push(()=>drawMetalChart(`rc-metal-${key}`, m.points)); }
+  }
+  if(fx && (fx.points||[]).length){ cards.push(refFxCard(fx)); draws.push(()=>drawFxChart("rc-fx", fx.points)); }
+  if(!cards.length) return;
+  const sec=document.createElement("div");
+  sec.innerHTML = `<div class="section-title">参考指標（地金・為替）<span class="section-note">※購入商品ではありません</span></div>` + cards.join("");
+  document.getElementById("app").appendChild(sec);
+  draws.forEach(fn => fn());
+}
+
+async function main(){
+  let index;
+  try { index = await getJSON("data/index.json"); }
+  catch(e){ document.getElementById("app").innerHTML =
+    `<div class="empty">まだデータがありません。<br>GitHub Actions が一度実行されると表示されます。</div>`; return; }
+
+  const fxTxt = index.fx_usdjpy != null ? ` · 為替 1$=${Number(index.fx_usdjpy).toFixed(2)}円` : "";
+  document.getElementById("updated").textContent =
+    "更新: " + new Date(index.generated).toLocaleString() + fxTxt;
+  const products = index.products || [];
+  if(!products.length){ document.getElementById("app").innerHTML =
+    `<div class="empty">監視中の商品がありません。</div>`; return; }
+
+  document.getElementById("app").innerHTML = products.map(renderCard).join("");
+  for(const p of products){ await drawChart(p); }
+
+  await drawReference();
+
+  if(charts.length){
+    document.getElementById("toolbar").style.display = "flex";
+    document.querySelectorAll(".range-btn").forEach(b =>
+      b.addEventListener("click", () => applyRange(b.dataset.range)));
+    applyRange(currentRange);
+  }
+}
+
+main();
+
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+</script>
+</body>
+</html>
