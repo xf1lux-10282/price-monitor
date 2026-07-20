@@ -17850,6 +17850,11 @@
       "t": "2026-07-20T21:00:45Z",
       "usdjpy": 162.457,
       "source": "Yahoo Finance"
+    },
+    {
+      "t": "2026-07-20T22:00:45Z",
+      "usdjpy": 162.463,
+      "source": "Yahoo Finance"
     }
   ]
 }
