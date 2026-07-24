@@ -18370,6 +18370,11 @@
       "t": "2026-07-24T11:11:14Z",
       "usdjpy": 163.769,
       "source": "Yahoo Finance"
+    },
+    {
+      "t": "2026-07-24T12:00:41Z",
+      "usdjpy": 163.806,
+      "source": "Yahoo Finance"
     }
   ]
 }
