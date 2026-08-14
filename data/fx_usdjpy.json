@@ -21330,6 +21330,11 @@
       "t": "2026-08-14T01:00:31Z",
       "usdjpy": 159.364,
       "source": "Yahoo Finance"
+    },
+    {
+      "t": "2026-08-14T02:00:31Z",
+      "usdjpy": 159.429,
+      "source": "Yahoo Finance"
     }
   ]
 }
