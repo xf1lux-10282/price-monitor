@@ -21550,6 +21550,11 @@
       "t": "2026-08-15T11:00:28Z",
       "usdjpy": 159.305,
       "source": "Yahoo Finance"
+    },
+    {
+      "t": "2026-08-15T12:00:30Z",
+      "usdjpy": 159.305,
+      "source": "Yahoo Finance"
     }
   ]
 }
