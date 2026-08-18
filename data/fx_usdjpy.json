@@ -21940,6 +21940,11 @@
       "t": "2026-08-18T03:00:32Z",
       "usdjpy": 159.465,
       "source": "Yahoo Finance"
+    },
+    {
+      "t": "2026-08-18T03:56:19Z",
+      "usdjpy": 159.555,
+      "source": "Yahoo Finance"
     }
   ]
 }
