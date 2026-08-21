@@ -22490,6 +22490,11 @@
       "t": "2026-08-21T19:00:34Z",
       "usdjpy": 159.011,
       "source": "Yahoo Finance"
+    },
+    {
+      "t": "2026-08-21T20:00:28Z",
+      "usdjpy": 159.0,
+      "source": "Yahoo Finance"
     }
   ]
 }
