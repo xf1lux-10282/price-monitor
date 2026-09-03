@@ -24305,6 +24305,11 @@
       "t": "2026-09-03T16:23:44Z",
       "usdjpy": 155.351,
       "source": "Yahoo Finance"
+    },
+    {
+      "t": "2026-09-03T17:00:52Z",
+      "usdjpy": 155.37,
+      "source": "Yahoo Finance"
     }
   ]
 }
