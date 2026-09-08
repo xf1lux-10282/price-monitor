@@ -28973,6 +28973,13 @@
       "method": "variation:25ml",
       "fx_usdjpy": 153.812,
       "price_jpy": 30881
+    },
+    {
+      "t": "2026-09-08T15:00:53Z",
+      "price": 200.77,
+      "method": "variation:25ml",
+      "fx_usdjpy": 154.052,
+      "price_jpy": 30929
     }
   ],
   "name": "Bostick & Sullivan: Palladium Solution #3 25ml",
