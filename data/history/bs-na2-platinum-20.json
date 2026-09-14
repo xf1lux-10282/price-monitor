@@ -30058,6 +30058,13 @@
       "method": "variation:10ml",
       "fx_usdjpy": 154.327,
       "price_jpy": 26282
+    },
+    {
+      "t": "2026-09-14T22:00:47Z",
+      "price": 170.3,
+      "method": "variation:10ml",
+      "fx_usdjpy": 154.29,
+      "price_jpy": 26276
     }
   ],
   "name": "Bostick & Sullivan: Sodium Platinum (Na2) 20% Solution 10ml",
