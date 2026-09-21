@@ -31262,6 +31262,13 @@
       "method": "variation:25ml",
       "fx_usdjpy": 157.236,
       "price_jpy": 58963
+    },
+    {
+      "t": "2026-09-21T10:00:45Z",
+      "price": 375.0,
+      "method": "variation:25ml",
+      "fx_usdjpy": 157.232,
+      "price_jpy": 58962
     }
   ],
   "name": "Bostick & Sullivan: Platinum Solution #3 25ml",
