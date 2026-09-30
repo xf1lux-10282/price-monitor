@@ -27855,6 +27855,11 @@
       "t": "2026-09-30T00:00:42Z",
       "usdjpy": 157.424,
       "source": "Yahoo Finance"
+    },
+    {
+      "t": "2026-09-30T00:25:22Z",
+      "usdjpy": 157.328,
+      "source": "Yahoo Finance"
     }
   ]
 }
