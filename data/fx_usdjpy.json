@@ -29800,6 +29800,11 @@
       "t": "2026-11-13T11:00:43Z",
       "usdjpy": 159.911,
       "source": "Yahoo Finance"
+    },
+    {
+      "t": "2026-11-13T12:00:43Z",
+      "usdjpy": 159.934,
+      "source": "Yahoo Finance"
     }
   ]
 }
