@@ -30790,6 +30790,11 @@
       "t": "2026-11-20T20:11:31Z",
       "usdjpy": 158.476,
       "source": "Yahoo Finance"
+    },
+    {
+      "t": "2026-11-20T21:00:46Z",
+      "usdjpy": 158.46,
+      "source": "Yahoo Finance"
     }
   ]
 }
